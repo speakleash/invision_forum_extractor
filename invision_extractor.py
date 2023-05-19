@@ -19,12 +19,12 @@ from usp.tree import sitemap_tree_for_homepage
 #CONFIG
 
 DATASET_CATEGORY = "Dialogue"
-DATASET_NAME = "forum_kafeteria_pl_corpus"
-DATASET_DESCRIPTION = "Collection of forum discussions from forum.optymalizacja.com/"
+DATASET_NAME = "forum_optymalizacja_com_corpus"
+DATASET_DESCRIPTION = "Collection of forum discussions from forum.optymalizacja.com"
 LICENSE = "(c) www.forum.optymalizacja.com"
 DATASET_URL = 'https://www.forum.optymalizacja.com/'
 EXPECTED_URL_PARTS = ['/topic','/temat']
-PROCESSES=os.cpu_count()-8
+PROCESSES=os.cpu_count()
 
 ###
 
