@@ -24,7 +24,7 @@ DATASET_DESCRIPTION = "Collection of forum discussions from forum.optymalizacja.
 LICENSE = "(c) www.forum.optymalizacja.com"
 DATASET_URL = 'https://www.forum.optymalizacja.com/'
 EXPECTED_URL_PARTS = ['/topic','/temat']
-PROCESSES=1
+PROCESSES=2
 
 ###
 
@@ -80,7 +80,8 @@ def get_item_text(url:str):
             
             while len(soup.find_all('li', {'class': 'ipsPagination_next'}))>0 and len(soup.find_all('li', class_='ipsPagination_next ipsPagination_inactive'))==0:
                 
-                next_page_url=soup.find_all('li', {'class': 'ipsPagination_next'})[0]['href']
+                next_page_btns=soup.find_all('li', {'class': 'ipsPagination_next'})
+                next_page_url = next_page_btns[0].find('a')['href']
                 
                 next_page_response = session.get(next_page_url, timeout=60, headers=headers)
                 soup = BeautifulSoup(next_page_response.content, "html.parser")
@@ -192,7 +193,7 @@ if __name__ == '__main__':
         # issue tasks to the process pool
         for txt, meta in pool.imap(func=process_item, iterable=urls_generator(DATASET_URL), chunksize=1):
             total += 1
-            if txt:
+            if txt and len(txt)>200:
                 total_words += meta['words']
                 total_verbs += meta['verbs']
                 total_nouns += meta['nouns']
