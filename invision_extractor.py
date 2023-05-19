@@ -24,7 +24,7 @@ DATASET_DESCRIPTION = "Collection of forum discussions from forum.optymalizacja.
 LICENSE = "(c) www.forum.optymalizacja.com"
 DATASET_URL = 'https://www.forum.optymalizacja.com/'
 EXPECTED_URL_PARTS = ['/topic','/temat']
-PROCESSES=os.cpu_count()
+PROCESSES=1
 
 ###
 
@@ -32,6 +32,7 @@ PROCESSES=os.cpu_count()
 def urls_generator(url:str):
 
     tree = sitemap_tree_for_homepage(url)
+
     
     for page in tree.all_pages():
         if any(url_part in page.url for url_part in EXPECTED_URL_PARTS):
@@ -125,7 +126,7 @@ def process_item(url):
                 meta = {'url' : item_url, 'length': l, 'sentences': sentences, 'words': words, 'verbs': verbs, 'nouns': nouns, 'punctuations': punctuations, 'symbols': symbols, 'stopwords': stopwords, 'oovs':oovs}
         except Exception as e:
 
-            print("Error processing item -> "+item_url+" : "+e)
+            print("Error processing item -> "+item_url+" : "+str(e))
     else:
         print('Robots not allowed '+ item_url)
 
