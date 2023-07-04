@@ -59,7 +59,6 @@ def get_item_text(url:str):
     proxy = random.choice(proxies_list)
     
     if not proxy == '':
-        print('PROXY'+proxy)
         proxies = {"http://": proxy, "https://": proxy} 
         session.proxies=proxies
     else:
