@@ -1,0 +1,10 @@
+multiprocessing.pool import Pool
+requests
+glob
+shutil
+json
+lm_dataformat
+urllib
+urllib3
+bs4
+git+https://github.com/jchwila/ultimate-sitemap-parser
