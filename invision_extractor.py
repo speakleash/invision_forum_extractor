@@ -14,18 +14,29 @@ import urllib.parse
 import time
 from time import sleep
 from bs4 import BeautifulSoup
+import random
 from usp.tree import sitemap_tree_for_homepage
 
 #CONFIG
+#Fill only this data
 
 DATASET_CATEGORY = "Dialogue"
-DATASET_NAME = "forum_optymalizacja_com_corpus"
-DATASET_DESCRIPTION = "Collection of forum discussions from forum.optymalizacja.com"
-LICENSE = "(c) www.forum.optymalizacja.com"
-DATASET_URL = 'https://www.forum.optymalizacja.com/'
+DATASET_URL = 'https://forum.url' #<-----
 EXPECTED_URL_PARTS = ['/topic','/temat']
-PROCESSES=2
+PROCESSES=os.cpu_count()
 
+#Optional
+
+PROXIES = [
+    ''
+    #Add proxies. '' for no proxy
+]
+
+###AUTOCONFIG
+domain = urllib.parse.urlparse(DATASET_URL).netloc
+LICENSE = "(c) "+ domain
+DATASET_NAME = "forum_"+domain.replace('.','_').replace('www','')+"_corpus"
+DATASET_DESCRIPTION = "Collection of forum discussions from forum "+domain
 ###
 
 
@@ -43,6 +54,16 @@ def urls_generator(url:str):
              
 
 def get_item_text(url:str):
+
+
+    proxy = random.choice(proxies_list)
+    
+    if not proxy == '':
+        print('PROXY'+proxy)
+        proxies = {"http://": proxy, "https://": proxy} 
+        session.proxies=proxies
+    else:
+        session.proxies=None
     
     response = None
     text = ''
@@ -71,7 +92,7 @@ def get_item_text(url:str):
         comment_blocks = soup.find_all("div", {'data-role': "commentContent"})
 
         for comment in comment_blocks:
-            text += comment.text.strip()+"\n"
+            text += (' '.join(text for text in comment.strings))+'\n'
         
         #Process next page
         try:
@@ -86,10 +107,10 @@ def get_item_text(url:str):
                 next_page_response = session.get(next_page_url, timeout=60, headers=headers)
                 soup = BeautifulSoup(next_page_response.content, "html.parser")
                 
-                page_nav_results = soup.find_all("div", {'data-role': "commentContent"})
+                comment_blocks = soup.find_all("div", {'data-role': "commentContent"})
 
-                for i in page_nav_results:
-                    text += i.text.strip()+"\n"
+                for comment in comment_blocks:
+                    text += (' '.join(text for text  in comment.strings))+'\n'
                 
         except Exception as e:
             print("ERROR processing next page "+next_page_url+" : "+str(e))
@@ -115,7 +136,7 @@ def process_item(url):
     txt = ''
 
 
-    if rp.can_fetch('*', item_url):
+    if rp.can_fetch('Speakleash-v0.1', item_url):
 
         try:
             txt = get_item_text(item_url)
@@ -136,16 +157,27 @@ def process_item(url):
 
     
 
-def initialize_worker(url:str):
+def initialize_worker(url:str, PROXIES: list[str]):
 
     print('Initializing worker...')   
 
+    global proxies_list 
+    proxies_list = PROXIES
     global rp
     global session
-   
+    
+    headers = {
+		'User-Agent': 'Speakleash-v0.1',
+		"Accept-Encoding": "gzip, deflate",
+		"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		"Connection": "keep-alive"
+	}
+    
     rp = urllib.robotparser.RobotFileParser()
-    rp.set_url(urllib.parse.urljoin(url,'robots.txt'))
-    rp.read()
+    response = requests.get(urllib.parse.urljoin(url,'robots.txt'), headers=headers)   
+           
+    rp.parse(response.text.splitlines())
+
 
     session = requests.Session()
     retry = Retry(total=3, backoff_factor=3)
@@ -189,7 +221,7 @@ if __name__ == '__main__':
     
 
 
-    with Pool(initializer=initialize_worker, initargs=[DATASET_URL], processes=PROCESSES) as pool:
+    with Pool(initializer=initialize_worker, initargs=[DATASET_URL, PROXIES], processes=PROCESSES) as pool:
         # issue tasks to the process pool
         for txt, meta in pool.imap(func=process_item, iterable=urls_generator(DATASET_URL), chunksize=1):
             total += 1
